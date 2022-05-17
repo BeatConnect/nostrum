@@ -33,14 +33,14 @@ defmodule Nostrum.Token do
       iex> Nostrum.Token.check_token!(token)
       :ok
   """
-  def check_token!, do: check_token!(Application.get_env(:nostrum, :token))
-  def check_token!(nil), do: raise(@no_token_error_message)
+  def check_token, do: check_token(Application.get_env(:nostrum, :token))
+  def check_token(nil), do: false
 
-  def check_token!(<<user_id::binary-size(24), 46, _ts::binary-size(6), 46, _hmac_auth::binary>>) do
+  def check_token(<<user_id::binary-size(24), 46, _ts::binary-size(6), 46, _hmac_auth::binary>>) do
     decode_user_id!(user_id)
   end
 
-  def check_token!(token) when is_binary(token) do
+  def check_token(token) when is_binary(token) do
     case String.split(token, ".") do
       [user_id, _timestamp, _hmac_auth] -> decode_user_id!(user_id)
       _ -> raise(@invalid_token_error_message)

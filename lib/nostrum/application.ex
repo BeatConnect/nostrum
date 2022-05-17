@@ -9,21 +9,33 @@ defmodule Nostrum.Application do
 
   @doc false
   def start(_type, _args) do
-    Token.check_token!()
-    check_executables()
-    setup_ets_tables()
+    token = Token.check_token()
+    is_dev? = Application.get_env(:nostrum, :dev)
 
-    children = [
-      Nostrum.Api.Ratelimiter,
-      Nostrum.Shard.Connector,
-      Nostrum.Cache.CacheSupervisor,
-      Nostrum.Shard.Supervisor,
-      Nostrum.Voice.Supervisor
-    ]
+    children =
+      if token do
+        check_executables()
+        setup_ets_tables()
 
-    if Application.get_env(:nostrum, :dev),
-      do: Supervisor.start_link(children ++ [DummySupervisor], strategy: :one_for_one),
-      else: Supervisor.start_link(children, strategy: :one_for_one)
+        children = [
+          Nostrum.Api.Ratelimiter,
+          Nostrum.Shard.Connector,
+          Nostrum.Cache.CacheSupervisor,
+          Nostrum.Shard.Supervisor,
+          Nostrum.Voice.Supervisor
+        ]
+
+        if is_dev? do
+          children ++ [DummySupervisor]
+        else
+          children
+        end
+      else
+        Logger.warn("Nostrum not starting - no token.")
+        []
+      end
+
+    Supervisor.start_link(children, strategy: :one_for_one)
   end
 
   @doc false

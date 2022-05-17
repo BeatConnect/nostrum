@@ -1,7 +1,7 @@
 import Config
 
 config :nostrum,
-  token: "",
+  token: nil,
   ffmpeg: "ffmpeg",
   youtubedl: "youtube-dl"
 
